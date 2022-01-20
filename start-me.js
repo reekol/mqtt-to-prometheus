@@ -20,7 +20,7 @@ let templated = (obj) => {
     return template.join('\n')
 }
 function unwrap(obj, prefix) {
-    var res = {}
+    let res = {}
     if(typeof obj === 'object' && obj !== null){
       for (let k of Object.keys(obj)) {
           let val = obj[k],
