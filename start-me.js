@@ -1,6 +1,5 @@
 const mqtt = require('mqtt')
 const express = require('express')
-const Prometheus = require('prom-client');
 
 const app = express()
 const port = 9101
