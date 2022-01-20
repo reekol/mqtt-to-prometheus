@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "express": "^4.17.2",
+    "mqtt": "^4.3.4",
+    "prom-client": "^14.0.1"
+  }
+}
