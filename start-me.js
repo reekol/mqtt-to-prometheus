@@ -22,8 +22,8 @@ let templated = (obj) => {
 function unwrap(obj, prefix) {
     var res = {}
     if(typeof obj === 'object' && obj !== null){
-      for (var k of Object.keys(obj)) {
-          var val = obj[k],
+      for (let k of Object.keys(obj)) {
+          let val = obj[k],
               key = (prefix ? prefix + '_' + k : k)
           if (typeof val === 'object' && obj !== null){ Object.assign(res, unwrap(val, key)) }
           else{ res[key] = val }
