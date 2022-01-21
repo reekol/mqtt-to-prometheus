@@ -7,23 +7,20 @@ const port = 9101
 let Telemetry  = {}
 let Persistant = {}
 
-let createMetrics = (metrics_name, metrics_value, metrics_help,metrics_label = '') => {
-  return   `# HELP ${metrics_name} As ${metrics_help}.\n`
-         + `# TYPE ${metrics_name} gauge\n`
-         + `${metrics_name}${metrics_label} ${metrics_value}\n`
+let createMetrics = (metrics_name, metrics_value, metrics_help) => {
+  return   `# HELP ${metrics_name} As ${metrics_help}.\n` .replaceAll(/{(.*?)}/g, "")
+         + `# TYPE ${metrics_name} gauge\n`               .replaceAll(/{(.*?)}/g, "")
+         + `${metrics_name} ${metrics_value}\n`
 }
 
 let templated = (obj) => {
     let template = []
     for(let key of Object.keys(obj)){
-      if(typeof obj[key] === 'number'){
-        template.push( createMetrics(key,obj[key], key) )
-      }else{
-        template.push( createMetrics(key,1, key, `{label="${obj[key]}"}`) )
-      }
+      template.push( createMetrics(key,obj[key], key) )
     }
     return template.join('\n')
 }
+
 function unwrap(obj, prefix) {
     let res = {}
     if(typeof obj === 'object' && obj !== null){
@@ -31,10 +28,20 @@ function unwrap(obj, prefix) {
           let val = obj[k],
               key = (prefix ? prefix + '_' + k : k)
           if (typeof val === 'object' && obj !== null){ Object.assign(res, unwrap(val, key)) }
-          else{ res[key] = val }
+          else{
+            if(typeof val === 'number'){
+              res[key] = val
+            }else{
+              res[key + `{label="${val}"}`] = 1
+            }
+          }
       }
     }else{
-      res[prefix] = obj
+      if(typeof obj === 'number'){
+        res[prefix] = obj
+      }else{
+        res[prefix + `{label="${obj}"}`] = 1
+      }
     }
     return res
 }
