@@ -1,10 +1,11 @@
 const mqtt = require('mqtt')
 const express = require('express')
-const MQTT = 'mqtt://example.com:1883'
+const MQTT = 'mqtt://coldborn.com:1883'
 const app = express()
 const port = 9101
 
-let Telemetry = {}
+let Telemetry  = {}
+let Persistant = {}
 
 let createMetrics = (metrics_name, metrics_value, metrics_help,metrics_label = '') => {
   return   `# HELP ${metrics_name} As ${metrics_help}.\n`
@@ -47,23 +48,30 @@ client.on('message', (topic, message) => {
   try     {   cache = JSON.parse(message) }
   catch(e){   cache = message             }
 
-  Telemetry = Object.assign(
-      Telemetry,
-      unwrap(
-        cache,
-        'sh_' + topic
-          .replaceAll('/','_')
-          .replaceAll('-','_')
-          .replaceAll(':','_')
-    ));
+  let Unwrapped = unwrap(
+      cache,
+      'sh_' + topic
+        .replaceAll('/','_')
+        .replaceAll('-','_')
+        .replaceAll(':','_')
+  )
+  Telemetry  = Object.assign(Telemetry, Unwrapped)
+  Persistant = Object.assign(Persistant,Unwrapped)
+
 })
 
- app.listen(port, () => console.log(`Example app listening at http://localhost:${port}`) )
+app.listen(port, () => console.log(`Example app listening at http://localhost:${port}`) )
 
- app.get('/metrics', (req, res) => {
+app.get('/metrics', (req, res) => {
   res.status(200).set('Content-Type', 'text/plain');
   console.log(Telemetry)
   res.send(templated(Telemetry));
+  Telemetry = {}
+})
+
+app.get('/persistant', (req, res) => {
+  res.status(200).set('Content-Type', 'text/plain');
+  res.send(templated(Persistant));
 })
 
 /*
