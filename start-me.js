@@ -1,21 +1,25 @@
 const mqtt = require('mqtt')
 const express = require('express')
-
+const MQTT = 'mqtt://example.com:1883'
 const app = express()
 const port = 9101
 
 let Telemetry = {}
 
-let createMetrics = (metrics_name, metrics_value, metrics_help) => {
+let createMetrics = (metrics_name, metrics_value, metrics_help,metrics_label = '') => {
   return   `# HELP ${metrics_name} As ${metrics_help}.\n`
          + `# TYPE ${metrics_name} gauge\n`
-         + `${metrics_name} ${metrics_value}\n`
+         + `${metrics_name}${metrics_label} ${metrics_value}\n`
 }
 
 let templated = (obj) => {
     let template = []
     for(let key of Object.keys(obj)){
-      if(typeof obj[key] === 'number') template.push( createMetrics(key,obj[key], key) )
+      if(typeof obj[key] === 'number'){
+        template.push( createMetrics(key,obj[key], key) )
+      }else{
+        template.push( createMetrics(key,1, key, `{label="${obj[key]}"}`) )
+      }
     }
     return template.join('\n')
 }
@@ -34,7 +38,7 @@ function unwrap(obj, prefix) {
     return res
 }
 
-const client  = mqtt.connect('mqtt://coldborn.com:1883', { clean: true, connectTimeout: 4000 })
+const client  = mqtt.connect(MQTT, { clean: true, connectTimeout: 4000 })
       client.on('connect', () => client.subscribe('#', err => { }) )
 
 client.on('message', (topic, message) => {
@@ -42,6 +46,7 @@ client.on('message', (topic, message) => {
       message = message.toString()
   try     {   cache = JSON.parse(message) }
   catch(e){   cache = message             }
+
   Telemetry = Object.assign(
       Telemetry,
       unwrap(
